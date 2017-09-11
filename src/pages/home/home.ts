@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { NavController } from 'ionic-angular';
 import { AlertController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
+import { SmartAudio } from '../../providers/smart-audio/smart-audio';
 
 @Component({
   selector: 'page-home',
@@ -25,8 +26,17 @@ export class HomePage {
   tablesIncreaseInterval: number = 5;
   increaseCounter: number = 0;
 
-  constructor(public navCtrl: NavController, public alertCtrl: AlertController, public statusBar: StatusBar) {
+  constructor(public navCtrl: NavController, public alertCtrl: AlertController, public statusBar: StatusBar, public smartAudio: SmartAudio) {
     this.timer = this.timerStartValue;
+
+    smartAudio.preload('CorrectAnswer', 'assets/audio/8-Bit Game Coin 01.mp3');
+    smartAudio.preload('CorrectAnswer2', 'assets/audio/8-Bit Game Bonus 01.mp3');
+    smartAudio.preload('CorrectAnswer3', 'assets/audio/8-Bit Game Bonus 03.mp3');
+    smartAudio.preload('CorrectAnswer4', 'assets/audio/8-Bit Game Power Up 02.mp3');
+    smartAudio.preload('WrongAnswer', 'assets/audio/8-Bit Game Fail.mp3');
+    smartAudio.preload('8bitSelect', 'assets/audio/8-Bit Game Bonus 03.mp3');
+    smartAudio.preload('GameOver', 'assets/audio/8-Bit Try Again.mp3');
+
     statusBar.hide();
 
   }
@@ -73,7 +83,7 @@ export class HomePage {
     if(this.timerStartValue == 104) {
       this.timerStartValue = 304;
     } else {
-      this.timerStartValue = 304;
+      this.timerStartValue = 104;
     }
     this.timer = this.timerStartValue;
   }
@@ -97,10 +107,7 @@ export class HomePage {
   timeOut(){
     this.count = this.count - 1;
     if(this.count != 0) {
-
-      let wrongAnswer = new Audio('../../assets/audio/WrongAnswer.wav');
-      wrongAnswer.play();
-
+      this.smartAudio.play('WrongAnswer');
       this.pauseForMessage('It is ' + (this.numA * this.numB));
     } else {
       this.gameOver();
@@ -138,8 +145,6 @@ export class HomePage {
      */
     if(this.answer == (this.numA * this.numB)) {
 
-      let correctAnswer = new Audio('../../assets/audio/CorrectAnswer.mp3');
-      correctAnswer.play();
 
       this.increaseCounter++;
       if(this.increaseCounter == this.tablesIncreaseInterval) {
@@ -149,14 +154,24 @@ export class HomePage {
 
       let ratioLeft = this.timer / this.timerStartValue;
       this.points = this.points + Math.floor(ratioLeft * 50);
+      if(ratioLeft >= 0.8) {
+        this.smartAudio.play('CorrectAnswer4');
+      } else if(ratioLeft < 0.9 && ratioLeft >= 0.7) {
+        this.smartAudio.play('CorrectAnswer3');
+      } else if (ratioLeft < 0.75 && ratioLeft > 0.3) {
+        this.smartAudio.play('CorrectAnswer2');
+      } else {
+        this.smartAudio.play('CorrectAnswer');
+      }
+
       this.continueToCountDown = false;
       this.pauseForMessage('Correct!');
     }
   }
 
   gameOver() {
-    let wrongAnswer = new Audio('../../assets/audio/WrongAnswer.wav');
-    wrongAnswer.play();
+    this.tables = 3;
+    this.smartAudio.play('GameOver');
     let alert = this.alertCtrl.create({
       title: 'Game Over!',
       subTitle: 'Your total score is ' + this.points + '!',
