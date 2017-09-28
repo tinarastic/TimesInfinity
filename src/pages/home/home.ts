@@ -25,17 +25,19 @@ export class HomePage {
   tables: number = 3;
   tablesIncreaseInterval: number = 5;
   increaseCounter: number = 0;
+  isTimeout: boolean = false;
+  isKidsMode: boolean = false;
 
   constructor(public navCtrl: NavController, public alertCtrl: AlertController, public statusBar: StatusBar, public smartAudio: SmartAudio) {
     this.timer = this.timerStartValue;
 
     smartAudio.preload('CorrectAnswer', 'assets/audio/8-Bit Game Coin 01.mp3');
-    smartAudio.preload('CorrectAnswer2', 'assets/audio/8-Bit Game Bonus 01.mp3');
-    smartAudio.preload('CorrectAnswer3', 'assets/audio/8-Bit Game Bonus 03.mp3');
-    smartAudio.preload('CorrectAnswer4', 'assets/audio/8-Bit Game Power Up 02.mp3');
+    smartAudio.preload('CorrectAnswer2', 'assets/audio/8-Bit Game Coin 02.mp3');
+    smartAudio.preload('CorrectAnswer3', 'assets/audio/8-Bit Game Bonus 01.mp3');
+    smartAudio.preload('CorrectAnswer4', 'assets/audio/8-Bit Game Bonus 02.mp3');
+    smartAudio.preload('CorrectAnswer5', 'assets/audio/8-Bit Game Bonus 03.mp3');
     smartAudio.preload('WrongAnswer', 'assets/audio/8-Bit Game Fail.mp3');
-    smartAudio.preload('8bitSelect', 'assets/audio/8-Bit Game Bonus 03.mp3');
-    smartAudio.preload('GameOver', 'assets/audio/8-Bit Try Again.mp3');
+    smartAudio.preload('GameOver', 'assets/audio/8-Bit Game Try Again.mp3');
 
     statusBar.hide();
 
@@ -67,6 +69,7 @@ export class HomePage {
     this.numB = this.getRandomNumber(this.numB);
     this.timer = this.timerStartValue;
     this.continueToCountDown = true;
+    this.isTimeout = false;
     this.countdown();
 
   }
@@ -82,8 +85,10 @@ export class HomePage {
   toggleEasy(){
     if(this.timerStartValue == 104) {
       this.timerStartValue = 304;
+      this.isKidsMode = true;
     } else {
       this.timerStartValue = 104;
+      this.isKidsMode = false;
     }
     this.timer = this.timerStartValue;
   }
@@ -121,6 +126,7 @@ export class HomePage {
   }
 
   pauseForMessage(message){
+    this.isTimeout = true;
     this.message = message;
     setTimeout(() => {
       this.setEquation();
@@ -128,6 +134,8 @@ export class HomePage {
   }
 
   buttonPressed(event,item) {
+
+    if(this.isTimeout == true) return;
 
     /**
      * Set the numbers entered through the keypad as the answer
@@ -148,17 +156,23 @@ export class HomePage {
 
       this.increaseCounter++;
       if(this.increaseCounter == this.tablesIncreaseInterval) {
-        this.tables++;
+        if(this.isKidsMode && this.tables >= 1) {
+          /** No increase in tables */
+        } else {
+          this.tables++;
+        }
         this.increaseCounter = 0;
       }
 
       let ratioLeft = this.timer / this.timerStartValue;
       this.points = this.points + Math.floor(ratioLeft * 50);
-      if(ratioLeft >= 0.8) {
+      if(ratioLeft >= 0.9) {
+        this.smartAudio.play('CorrectAnswer5');
+      } else if(ratioLeft >= 0.8) {
         this.smartAudio.play('CorrectAnswer4');
-      } else if(ratioLeft < 0.9 && ratioLeft >= 0.7) {
+      } else if(ratioLeft >= 0.7) {
         this.smartAudio.play('CorrectAnswer3');
-      } else if (ratioLeft < 0.75 && ratioLeft > 0.3) {
+      } else if (ratioLeft >= 0.6) {
         this.smartAudio.play('CorrectAnswer2');
       } else {
         this.smartAudio.play('CorrectAnswer');
